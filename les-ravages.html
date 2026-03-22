@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Les Ravagés</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  // =============================================
+  // REMPLACE CES DEUX VALEURS PAR LES TIENNES
+  // Supabase > Settings > API
+  // =============================================
+  const SUPABASE_URL = 'https://tfhvcqmtpsuhewoopffx.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaHZjcW10cHN1aGV3b29wZmZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODc5NzIsImV4cCI6MjA4OTc2Mzk3Mn0.lTqJdZm-Lc7N_-aYOvd5iYHH4R1sUzywoVHtgwoEfJI';
+</script>
+<style>
+:root{--red:#E24B4A;--bg:#111110;--bg2:#1a1a18;--bg3:#222220;--fg:#f0ede6;--muted:#6b6a63;--border:rgba(255,255,255,0.08);--nav-bg:rgba(17,17,16,0.92);--drop-border:rgba(255,255,255,0.15);--modal-border:rgba(255,255,255,0.1);--glow:rgba(226,75,74,0.12)}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:64px;background:var(--nav-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);transition:background .3s}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-icon{width:32px;height:32px}
+.nav-logo-text{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--fg)}
+.nav-logo-text span{color:var(--red)}
+.nav-actions{display:flex;align-items:center;gap:8px}
+.btn{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;padding:8px 18px;border-radius:4px;border:none;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--fg);border-color:rgba(128,128,128,.4)}
+.btn-red{background:var(--red);color:#fff}
+.btn-support{background:transparent;color:#f5a623;border:1px solid rgba(245,166,35,.4);text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn-support:hover{background:rgba(245,166,35,.1);border-color:#f5a623;transform:translateY(-1px)}
+.btn-red:hover{background:#c73c3b;transform:translateY(-1px)}
+.btn-big{padding:14px 32px;font-size:12px}
+
+.bracket-tl,.bracket-br{position:fixed;pointer-events:none;z-index:50}
+.bracket-tl{top:72px;left:16px}.bracket-br{bottom:16px;right:16px}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px 40px;position:relative;text-align:center}
+.hero::after{content:'';position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:600px;height:300px;background:radial-gradient(ellipse,var(--glow) 0%,transparent 70%);pointer-events:none}
+.hero-logo{margin-bottom:20px;animation:fadeUp .8s ease both}
+.hero-logo svg{width:min(600px,90vw);height:auto}
+.hero-tagline{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:5px;color:var(--muted);text-transform:uppercase;margin-bottom:40px;animation:fadeUp .8s .1s ease both}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;animation:fadeUp .8s .2s ease both}
+.feed-section{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
+.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:16px;flex-wrap:wrap;gap:12px}
+.feed-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.feed-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--muted)}
+.feed-count{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)}
+.cat-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.cat-tab{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;text-transform:uppercase}
+.cat-tab:hover{color:var(--fg);border-color:rgba(128,128,128,.4)}
+.cat-tab.active{background:var(--red);color:#fff;border-color:var(--red)}
+.cat-tab.nsfw-tab{border-color:rgba(226,75,74,.35);color:var(--red)}
+.cat-tab.hard-tab{border-color:rgba(180,20,20,.5);color:#ff4444}
+.feed-grid{columns:3;column-gap:16px}
+@media(max-width:768px){.feed-grid{columns:2}.hero-logo svg{width:95vw}}
+@media(max-width:480px){.feed-grid{columns:1}nav{padding:0 16px}.nav-logo-text{font-size:20px}}
+.photo-card{break-inside:avoid;margin-bottom:16px;border-radius:8px;overflow:hidden;background:var(--bg2);border:1px solid var(--border);transition:transform .2s,border-color .2s;animation:fadeUp .5s ease both}
+.photo-card:hover{transform:translateY(-3px);border-color:rgba(226,75,74,.4)}
+.photo-card img{width:100%;display:block;object-fit:cover}
+.photo-card video{width:100%;display:block;max-height:400px;background:#000;outline:none}
+.media-type-badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);color:#fff;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:10px;text-transform:uppercase;z-index:3}
+.card-body{padding:10px 12px 12px}
+.cat-badge{display:inline-block;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:10px;text-transform:uppercase;margin-bottom:6px}
+.cat-badge.general{background:rgba(107,106,99,.15);color:var(--muted)}
+.cat-badge.selfie{background:rgba(59,139,212,.15);color:#5aabee}
+.cat-badge.nsfw{background:rgba(226,75,74,.15);color:var(--red)}
+.cat-badge.videos{background:rgba(139,59,212,.15);color:#a05aee}
+.cat-badge.hard{background:rgba(180,20,20,.25);color:#ff4444}
+.photo-author{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--red);text-transform:uppercase;margin-bottom:4px}
+.photo-author.anon{color:var(--muted)}
+.photo-caption{font-size:13px;color:rgba(240,237,230,.7);line-height:1.4}
+
+.photo-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.photo-time{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)}
+.photo-likes{display:flex;align-items:center;gap:4px;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);cursor:pointer;transition:color .2s;background:none;border:none;padding:0}
+.photo-likes:hover,.photo-likes.liked{color:var(--red)}
+.nsfw-wrap{position:relative}
+.nsfw-img-blur{filter:blur(20px)}
+.nsfw-cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,.3);z-index:4}
+.nsfw-cover-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:#fff;opacity:.9;text-transform:uppercase}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--modal-border);border-radius:12px;width:100%;max-width:480px;padding:32px;transform:translateY(20px);transition:transform .25s,background .3s;position:relative;max-height:90vh;overflow-y:auto}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;margin-bottom:6px}
+.modal-title span{color:var(--red)}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:22px;font-family:'Space Mono',monospace}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;transition:color .2s}
+.modal-close:hover{color:var(--fg)}
+.drop-zone{border:2px dashed var(--drop-border);border-radius:8px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px;position:relative}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--red);background:rgba(226,75,74,.05)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-icon{width:44px;height:44px;margin:0 auto 10px;opacity:.45;display:block}
+.drop-text{font-size:13px;color:var(--muted);line-height:1.6}
+.drop-text strong{color:var(--fg);display:block;margin-bottom:3px}
+#preview-img{width:100%;border-radius:6px;display:none;margin-bottom:14px;max-height:180px;object-fit:cover}
+.form-group{margin-bottom:14px}
+.form-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--fg);outline:none;transition:border-color .2s,background .3s}
+.form-input:focus{border-color:rgba(226,75,74,.6)}
+.form-input::placeholder{color:var(--muted)}
+.cat-select{display:flex;gap:8px;flex-wrap:wrap}
+.cat-opt{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;padding:6px 12px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;text-transform:uppercase}
+.cat-opt:hover{border-color:rgba(128,128,128,.4);color:var(--fg)}
+.cat-opt.sel{border-color:var(--red);color:var(--red);background:rgba(226,75,74,.08)}
+.anon-toggle{display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;user-select:none}
+.anon-toggle input{display:none}
+.toggle-track{width:36px;height:20px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;position:relative;transition:background .2s;flex-shrink:0}
+.anon-toggle input:checked~.toggle-track{background:var(--red);border-color:var(--red)}
+.toggle-thumb{width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:transform .2s}
+.anon-toggle input:checked~.toggle-track .toggle-thumb{transform:translateX(16px)}
+.toggle-label{font-size:13px;color:var(--fg)}
+.toggle-label small{display:block;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace}
+.submit-row{display:flex;gap:10px}
+.btn-submit{flex:1;padding:12px;font-size:12px}
+.upload-progress{display:none;margin-bottom:14px}
+.upload-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.upload-bar-fill{height:100%;background:var(--red);border-radius:2px;transition:width .3s}
+.upload-label{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px}
+.age-gate-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);backdrop-filter:blur(20px);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .3s}
+.age-gate-overlay.open{opacity:1;pointer-events:all}
+.age-gate{background:var(--bg2);border:1px solid rgba(226,75,74,.35);border-radius:16px;width:100%;max-width:420px;padding:44px 36px;text-align:center;transform:scale(.95);transition:transform .3s}
+.age-gate-overlay.open .age-gate{transform:scale(1)}
+.age-icon{font-size:52px;display:block;margin-bottom:18px}
+.age-title{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:5px;color:var(--red);margin-bottom:12px}
+.age-q{font-size:18px;font-weight:500;color:var(--fg);margin-bottom:10px}
+.age-desc{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:32px}
+.age-btns{display:flex;flex-direction:column;gap:12px}
+.btn-age-yes{background:var(--red);color:#fff;padding:15px;font-size:12px;border-radius:6px;border:none;cursor:pointer;font-family:'Space Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;transition:all .2s}
+.btn-age-yes:hover{background:#c73c3b}
+.btn-age-no{background:transparent;color:var(--muted);padding:12px;font-size:11px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-family:'Space Mono',monospace;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+.btn-age-no:hover{color:var(--fg)}
+.age-legal{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:20px;opacity:.55;line-height:1.6}
+
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .2s}
+.confirm-overlay.open{opacity:1;pointer-events:all}
+.confirm-box{background:var(--bg2);border:1px solid rgba(226,75,74,.3);border-radius:12px;max-width:360px;width:100%;padding:32px;text-align:center}
+.confirm-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--red);margin-bottom:10px}
+.confirm-text{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.confirm-btns{display:flex;gap:10px}
+.loading-state{text-align:center;padding:60px 20px}
+.loading-state p{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;animation:pulse 1.5s ease infinite}
+.empty-state{text-align:center;padding:80px 20px;display:none}
+.empty-state svg{margin:0 auto 16px;opacity:.25;display:block}
+.empty-state p{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:1px;line-height:1.8}
+.comment-section{border-top:1px solid var(--border);margin-top:8px;padding-top:8px}
+.comment-toggle{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);cursor:pointer;background:none;border:none;padding:0;letter-spacing:1px;transition:color .2s;display:flex;align-items:center;gap:5px}
+.comment-toggle:hover{color:var(--fg)}
+.comment-list{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.comment-item{background:var(--bg3);border-radius:6px;padding:7px 10px;font-size:12px;line-height:1.5}
+.comment-author{font-family:'Space Mono',monospace;font-size:9px;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.comment-author.anon{color:var(--muted)}
+.comment-text{color:var(--fg);opacity:.85}
+.comment-time{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:2px}
+.comment-input-row{display:flex;gap:6px;margin-top:8px}
+.comment-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--fg);outline:none;transition:border-color .2s}
+.comment-input:focus{border-color:rgba(226,75,74,.5)}
+.comment-input::placeholder{color:var(--muted);font-size:11px}
+.comment-send{background:var(--red);color:#fff;border:none;border-radius:6px;padding:7px 12px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:background .2s;white-space:nowrap}
+.comment-send:hover{background:#c73c3b}
+.comment-pseudo-row{display:flex;gap:6px;margin-bottom:6px}
+.comment-pseudo{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;font-family:'DM Sans',sans-serif;color:var(--fg);outline:none}
+.comment-pseudo::placeholder{color:var(--muted)}
+
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:800;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.lightbox.open{opacity:1;pointer-events:all}
+.lightbox-inner{position:relative;max-width:95vw;max-height:95vh;display:flex;align-items:center;justify-content:center}
+.lightbox-inner img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:6px;display:block}
+.lightbox-inner video{max-width:95vw;max-height:90vh;border-radius:6px;display:block;outline:none}
+.lightbox-close{position:fixed;top:16px;right:20px;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:26px;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;z-index:10;line-height:1}
+.lightbox-close:hover{background:rgba(226,75,74,.7)}
+.lightbox-info{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:24px 24px 20px;text-align:center}
+.lightbox-author{font-family:'Space Mono',monospace;font-size:11px;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.lightbox-author.anon{color:rgba(255,255,255,.4)}
+.lightbox-caption{font-size:14px;color:rgba(255,255,255,.8);line-height:1.5}
+
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg2);border:1px solid rgba(226,75,74,.4);color:var(--fg);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;padding:12px 24px;border-radius:40px;z-index:999;transition:transform .3s,opacity .3s;opacity:0;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.err{border-color:rgba(226,75,74,.8);background:#2a1515}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <svg class="nav-logo-icon" viewBox="0 0 32 32" fill="none">
+      <rect x="1" y="8" width="30" height="22" rx="4" stroke="#E24B4A" stroke-width="2"/>
+      <rect x="10" y="2" width="12" height="8" rx="3" stroke="#E24B4A" stroke-width="2"/>
+      <circle cx="16" cy="19" r="6" stroke="#E24B4A" stroke-width="2"/>
+      <circle cx="16" cy="19" r="3" fill="#E24B4A" opacity="0.5"/>
+      <circle cx="26" cy="12" r="2" fill="#E24B4A"/>
+    </svg>
+    <span class="nav-logo-text">LES <span>RAVAGES</span></span>
+  </a>
+  <div class="nav-actions">
+    <a href="https://www.paypal.com/paypalme/lesravages" target="_blank" class="btn btn-support">💛 Nous soutenir</a>
+    <button class="btn btn-red" onclick="openModal()">+ Poster</button>
+  </div>
+</nav>
+<svg class="bracket-tl" width="24" height="24" viewBox="0 0 24 24"><path d="M20,4 L4,4 L4,20" fill="none" stroke="#E24B4A" stroke-width="1.5" stroke-linecap="round"/></svg>
+<svg class="bracket-br" width="24" height="24" viewBox="0 0 24 24"><path d="M4,20 L20,20 L20,4" fill="none" stroke="#E24B4A" stroke-width="1.5" stroke-linecap="round"/></svg>
+
+<section class="hero">
+  <div class="hero-logo">
+    <svg viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg">
+      
+      <g transform="translate(30,90)">
+        <rect x="0" y="14" width="80" height="56" rx="8" fill="none" stroke="#E24B4A" stroke-width="2.5"/>
+        <rect x="22" y="4" width="36" height="14" rx="5" fill="none" stroke="#E24B4A" stroke-width="2.5"/>
+        <circle cx="40" cy="44" r="18" fill="none" stroke="#E24B4A" stroke-width="2.5"/>
+        <circle cx="40" cy="44" r="10" fill="#E24B4A" opacity="0.25"/>
+        <circle cx="40" cy="44" r="5" fill="#E24B4A" opacity="0.6"/>
+        <circle cx="68" cy="26" r="4" fill="#E24B4A"/>
+      </g>
+      <text x="140" y="135" font-size="20" font-weight="300" letter-spacing="12" fill="#aaa9a0">LES</text>
+      <text x="138" y="200" font-size="72" font-weight="700" letter-spacing="-2" fill="#ffffff">RAVAGES</text>
+      <polyline points="138,212 250,206 370,214 500,208 555,212" fill="none" stroke="#E24B4A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="140" y="244" font-size="11" font-weight="400" letter-spacing="4" fill="#5f5e5a">POSTEZ. ANONYMEMENT. SANS FILTRE.</text>
+      <path d="M12,48 L12,18 L42,18" fill="none" stroke="#E24B4A" stroke-width="2" stroke-linecap="round"/>
+      <path d="M588,232 L588,262 L558,262" fill="none" stroke="#E24B4A" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <p class="hero-tagline">Une photo. Un pseudo. Ou rien du tout.</p>
+  <div class="hero-cta">
+    <button class="btn btn-red btn-big" onclick="openModal()">📸 Poster une photo</button>
+    <button class="btn btn-ghost btn-big" onclick="document.getElementById('feed').scrollIntoView({behavior:'smooth'})">Voir le fil ↓</button>
+  </div>
+</section>
+
+<section class="feed-section" id="feed">
+  <div class="feed-header">
+    <div class="feed-left">
+      <span class="feed-title">FIL</span>
+      <div class="cat-tabs">
+        <button class="cat-tab active"   onclick="setFilter('all',this)">Tout</button>
+        <button class="cat-tab"          onclick="setFilter('general',this)">📷 General</button>
+        <button class="cat-tab"          onclick="setFilter('selfie',this)">🤳 Selfie</button>
+        <button class="cat-tab nsfw-tab" onclick="tryNSFW(this)">🔞 NSFW</button>
+        <button class="cat-tab" onclick="setFilter('videos',this)">🎥 Videos</button>
+        <button class="cat-tab hard-tab" onclick="tryRestricted('hard',this)">🔴 Hard</button>
+      </div>
+    </div>
+    <span class="feed-count" id="feed-count">...</span>
+  </div>
+  <div id="loading-state" class="loading-state"><p>// Chargement...</p></div>
+  <div class="feed-grid" id="feed-grid"></div>
+  <div class="empty-state" id="empty-state">
+    <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
+      <rect x="4" y="18" width="56" height="40" rx="6" stroke="currentColor" stroke-width="2"/>
+      <rect x="22" y="8" width="20" height="14" rx="4" stroke="currentColor" stroke-width="2"/>
+      <circle cx="32" cy="38" r="10" stroke="currentColor" stroke-width="2"/>
+      <circle cx="32" cy="38" r="5" fill="currentColor" opacity="0.4"/>
+    </svg>
+    <p>Aucune photo ici.<br>Sois le premier a ravager le mur.</p>
+  </div>
+</section>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">x</button>
+    <div class="modal-title">POSTER <span>UNE PHOTO</span></div>
+    <p class="modal-sub">// anonyme par defaut</p>
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" accept="image/jpeg,image/png,image/gif,image/webp,image/heic,video/mp4,video/webm,video/quicktime,video/x-msvideo" onchange="handleFile(this)">
+      <svg class="drop-icon" viewBox="0 0 48 48" fill="none">
+        <rect x="2" y="14" width="44" height="32" rx="5" stroke="currentColor" stroke-width="2"/>
+        <rect x="16" y="5" width="16" height="12" rx="4" stroke="currentColor" stroke-width="2"/>
+        <circle cx="24" cy="30" r="8" stroke="currentColor" stroke-width="2"/>
+        <circle cx="24" cy="30" r="4" fill="currentColor" opacity="0.4"/>
+      </svg>
+      <div class="drop-text"><strong>Glisse ta photo ou video ici</strong>ou clique pour choisir</div>
+    </div>
+    <img id="preview-img" alt=""/>
+    <div class="upload-progress" id="upload-progress">
+      <div class="upload-bar"><div class="upload-bar-fill" id="upload-fill" style="width:0%"></div></div>
+      <div class="upload-label" id="upload-label"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categorie</label>
+      <div class="cat-select">
+        <button class="cat-opt sel" data-cat="general" onclick="pickCat('general',this)">📷 General</button>
+        <button class="cat-opt"     data-cat="selfie"  onclick="pickCat('selfie',this)">🤳 Selfie</button>
+        <button class="cat-opt"     data-cat="nsfw"    onclick="pickCat('nsfw',this)">🔞 NSFW</button>
+        <button class="cat-opt"     data-cat="videos"  onclick="pickCat('videos',this)">🎥 Videos</button>
+        <button class="cat-opt"     data-cat="hard"    onclick="pickCat('hard',this)">🔴 Hard</button>
+      </div>
+    </div>
+    <div style="background:rgba(226,75,74,0.07);border:1px solid rgba(226,75,74,0.2);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7;letter-spacing:0.5px">
+        // Merci de respecter les categories :<br>
+        📷 General = photos du quotidien<br>
+        🤳 Selfie = photos de toi<br>
+        🎥 Videos = toutes les videos<br>
+        🔞 NSFW = contenu adulte leger<br>
+        🔴 Hard = contenu adulte explicite
+      </div>
+      <div class="form-group">
+      <label class="form-label" for="caption-input">Legende (optionnel)</label>
+      <input class="form-input" id="caption-input" type="text" placeholder="Dis quelque chose...">
+    </div>
+    <label class="anon-toggle">
+      <input type="checkbox" id="anon-check" checked onchange="toggleAnon()">
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <div class="toggle-label">Anonyme<small>// aucun pseudo affiche</small></div>
+    </label>
+    <div class="form-group" id="pseudo-group" style="display:none">
+      <label class="form-label" for="pseudo-input">Ton pseudo</label>
+      <input class="form-input" id="pseudo-input" type="text" placeholder="ex: 0xshadow...">
+    </div>
+    <div class="submit-row">
+      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-red btn-submit" id="submit-btn" onclick="submitPhoto()">Publier</button>
+    </div>
+  </div>
+</div>
+
+<!-- AGE GATE -->
+<div class="age-gate-overlay" id="age-gate">
+  <div class="age-gate">
+    <span class="age-icon">🔞</span>
+    <div class="age-title">CONTENU ADULTE</div>
+    <p class="age-q" id="age-gate-cat-label" style="font-family:'Space Mono',monospace;font-size:13px;color:var(--red);letter-spacing:2px;margin-bottom:6px">🔞 NSFW</p>
+    <p class="age-q">Avez-vous 18 ans ou plus ?</p>
+    <p class="age-desc" id="age-gate-cat-desc">Contenu explicite reserve aux adultes.</p>
+    <div class="age-btns">
+      <button class="btn-age-yes" onclick="confirmAge(true)">Oui, j'ai 18 ans ou plus</button>
+      <button class="btn-age-no"  onclick="confirmAge(false)">Non — retour accueil</button>
+    </div>
+    <p class="age-legal">En continuant vous confirmez etre majeur(e).</p>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title">SUPPRIMER ?</div>
+    <p class="confirm-text">Cette action est irreversible.</p>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeConfirm()">Annuler</button>
+      <button class="btn btn-red"   style="flex:1" id="confirm-yes">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="if(event.target===this||event.target===document.getElementById('lightbox-inner'))closeLightbox()">
+  <div class="lightbox-inner" id="lightbox-inner">
+    <img id="lb-img" src="" alt="" style="display:none">
+    <video id="lb-vid" controls playsinline style="display:none"></video>
+  </div>
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <div class="lightbox-info">
+    <div class="lightbox-author" id="lb-author"></div>
+    <div class="lightbox-caption" id="lb-caption"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── INIT ─────────────────────────────────────────────────────────
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const CL = {general:'General', selfie:'Selfie', nsfw:'NSFW', videos:'Videos', hard:'Hard'};
+
+// ── THEME ─────────────────────────────────────────────────────────
+
+
+// ── STATE ─────────────────────────────────────────────────────────
+let photos = [], curFilter = 'all', selCat = 'general', selFile = null, isUploading = false;
+let ageOk = sessionStorage.getItem('rv_age') === 'yes', pendingTab = null;
+let pendingDelId = null, pendingDelPath = null;
+const likedSet = new Set(JSON.parse(localStorage.getItem('rv_liked') || '[]'));
+let commentCounts = {};
+
+// ── LOAD PHOTOS ───────────────────────────────────────────────────
+async function loadPhotos(){
+  try {
+    let q = sb.from('photos').select('*').order('created_at', {ascending: false});
+    if(curFilter === 'all'){
+      // Exclude nsfw and hard from the main feed
+      q = q.not('cat', 'in', '("nsfw","hard")');
+    } else {
+      q = q.eq('cat', curFilter);
+    }
+    const {data, error} = await q;
+    if(error) throw error;
+    photos = data || [];
+    // Charge les compteurs de commentaires
+    if(photos.length){
+      const ids = photos.map(p => p.id);
+      const {data: cmtData} = await sb.from('comments').select('photo_id').in('photo_id', ids);
+      commentCounts = {};
+      (cmtData || []).forEach(c => {
+        commentCounts[c.photo_id] = (commentCounts[c.photo_id] || 0) + 1;
+      });
+    } else {
+      commentCounts = {};
+    }
+    renderFeed();
+  } catch(e) {
+    console.error(e);
+    showToast('Erreur: ' + e.message, true);
+    document.getElementById('loading-state').style.display = 'none';
+  }
+}
+
+// ── RENDER FEED ───────────────────────────────────────────────────
+function renderFeed(){
+  const grid  = document.getElementById('feed-grid');
+  const empty = document.getElementById('empty-state');
+  const count = document.getElementById('feed-count');
+  document.getElementById('loading-state').style.display = 'none';
+  count.textContent = photos.length + ' photo(s)';
+  if(!photos.length){ empty.style.display='block'; grid.innerHTML=''; return; }
+  empty.style.display = 'none';
+  console.log('Render', photos.length, 'photos, ex URL:', photos[0]?.url);
+  grid.innerHTML = photos.map((p,i) => {
+    const isAnon = p.anon === true || p.anon === 'true';
+    const blur   = (p.cat === 'nsfw' || p.cat === 'hard') && !ageOk;
+    const lkd    = likedSet.has(String(p.id));
+    return `<div class="photo-card" style="animation-delay:${i*.04}s">
+      <div class="nsfw-wrap">
+        ${(p.media_type === 'video') ?
+        `<video src="${p.url}" controls playsinline preload="metadata" style="width:100%;max-height:400px;background:#000;display:block;${blur?'filter:blur(20px)':''};${blur?'':' cursor:zoom-in'}" ${blur?'':`onclick="openLightbox('video','${p.url}',${JSON.stringify(p.anon)},'${esc(p.author||"")}','${esc(p.caption||"")}')"` }></video><span class="media-type-badge">🎥 video</span>` :
+        `<img src="${p.url}" loading="lazy"${blur ? ' class="nsfw-img-blur"' : ''} onerror="this.style.opacity=0.2"${!blur ? ` onclick="openLightbox('image','${p.url}',${JSON.stringify(p.anon)},'${esc(p.author||"")}','${esc(p.caption||"")}')" style="cursor:zoom-in"` : ''}>`
+      }
+        ${blur ? `<div class="nsfw-cover"><span class="nsfw-cover-label">🔞 NSFW</span><button class="btn btn-red" style="padding:5px 14px;font-size:10px" onclick="tryNSFW(null)">Voir</button></div>` : ''}
+      </div>
+      <div class="card-body">
+        <span class="cat-badge ${p.cat||'general'}">${CL[p.cat]||p.cat}</span>
+        <div class="photo-author ${isAnon?'anon':''}">${isAnon ? '// anonyme' : (p.author || '// anonyme')}</div>
+        ${p.caption ? `<div class="photo-caption">${esc(p.caption)}</div>` : ''}
+        <div class="photo-meta">
+          <span class="photo-time">${ago(p.created_at)}</span>
+          <button class="photo-likes${lkd?' liked':''}" onclick="like(${p.id})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="${lkd?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            ${p.likes || 0}
+          </button>
+        </div>
+        <div class="comment-section">
+          <button class="comment-toggle" onclick="toggleComments(${p.id}, this)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span id="cmtcount-${p.id}">${commentCounts[p.id] ? commentCounts[p.id] + ' commentaire' + (commentCounts[p.id] > 1 ? 's' : '') : 'Commenter'}</span>
+          </button>
+          <div id="cmtbox-${p.id}" style="display:none">
+            <div class="comment-list" id="cmtlist-${p.id}"></div>
+            <div class="comment-pseudo-row">
+              <input class="comment-pseudo" id="cmtpseudo-${p.id}" type="text" placeholder="Pseudo (laisser vide = anonyme)">
+            </div>
+            <div class="comment-input-row">
+              <input class="comment-input" id="cmtinput-${p.id}" type="text" placeholder="Ecris un commentaire..." onkeydown="if(event.key==='Enter')postComment(${p.id})">
+              <button class="comment-send" onclick="postComment(${p.id})">Envoyer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── FILTER ────────────────────────────────────────────────────────
+function setFilter(f, tab){
+  curFilter = f;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  if(tab) tab.classList.add('active');
+  document.getElementById('loading-state').style.display = 'block';
+  document.getElementById('feed-grid').innerHTML = '';
+  document.getElementById('empty-state').style.display = 'none';
+  loadPhotos();
+  document.getElementById('feed').scrollIntoView({behavior:'smooth'});
+}
+
+// ── AGE GATE ──────────────────────────────────────────────────────
+function tryNSFW(tab){ tryRestricted('nsfw', tab); }
+
+let pendingRestrictedCat = 'nsfw';
+function tryRestricted(cat, tab){
+  pendingRestrictedCat = cat;
+  if(ageOk){ setFilter(cat, tab); }
+  else {
+    pendingTab = tab;
+    // Update age gate title based on category
+    const isHard = cat === 'hard';
+    document.getElementById('age-gate-cat-label').textContent = isHard ? '🔴 HARD' : '🔞 NSFW';
+    document.getElementById('age-gate-cat-desc').textContent = isHard
+      ? 'Cette section contient du contenu explicite tres intense reserve aux adultes avertis.'
+      : 'Cette section contient du contenu explicite reserve aux adultes.';
+    document.getElementById('age-gate').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+}
+function confirmAge(yes){
+  document.getElementById('age-gate').classList.remove('open'); document.body.style.overflow='';
+  if(yes){ ageOk=true; sessionStorage.setItem('rv_age','yes'); setFilter(pendingRestrictedCat, pendingTab); }
+  else { window.scrollTo({top:0,behavior:'smooth'}); setFilter('all', document.querySelector('.cat-tab')); }
+  pendingTab = null;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────
+function openModal(){ document.getElementById('modal-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(){ if(isUploading) return; document.getElementById('modal-overlay').classList.remove('open'); document.body.style.overflow=''; resetForm(); }
+function pickCat(cat, btn){ selCat=cat; document.querySelectorAll('.cat-opt').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
+function toggleAnon(){ document.getElementById('pseudo-group').style.display = document.getElementById('anon-check').checked ? 'none' : 'block'; }
+
+function handleFile(inp){
+  const f = inp.files[0]; if(!f) return;
+  const validImg = ['image/jpeg','image/png','image/gif','image/webp','image/heic','image/avif'];
+  const validVid = ['video/mp4','video/webm','video/quicktime','video/x-msvideo','video/mpeg'];
+  const isVid = f.type.startsWith('video/');
+  const isImg = f.type.startsWith('image/');
+  if(!isImg && !isVid){
+    showToast('Fichier non accepte — images et videos uniquement !', true);
+    inp.value = '';
+    return;
+  }
+  selFile = f;
+  // Remove any existing preview video
+  const oldVid = document.getElementById('preview-vid');
+  if(oldVid) oldVid.remove();
+  if(isVid){
+    // Auto-select Videos category
+    pickCat('videos', document.querySelector('[data-cat="videos"]'));
+    document.getElementById('preview-img').style.display = 'none';
+    const vid = document.createElement('video');
+    vid.id = 'preview-vid';
+    vid.controls = true;
+    vid.style.cssText = 'width:100%;border-radius:6px;margin-bottom:14px;max-height:180px;background:#000';
+    vid.src = URL.createObjectURL(f);
+    document.getElementById('preview-img').insertAdjacentElement('afterend', vid);
+    document.querySelector('.drop-zone .drop-text').style.display = 'none';
+    document.querySelector('.drop-icon').style.display = 'none';
+  } else {
+    const r = new FileReader();
+    r.onload = e => {
+      document.getElementById('preview-img').src = e.target.result;
+      document.getElementById('preview-img').style.display = 'block';
+      document.querySelector('.drop-zone .drop-text').style.display = 'none';
+      document.querySelector('.drop-icon').style.display = 'none';
+    };
+    r.readAsDataURL(f);
+  }
+}
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(f){
+    if(!f.type.startsWith('image/') && !f.type.startsWith('video/')){
+      showToast('Fichier non accepte — images et videos uniquement !', true);
+    } else {
+      const inp = document.getElementById('file-input');
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      inp.files = dt.files;
+      handleFile(inp);
+    }
+  }
+});
+
+// ── SUBMIT ────────────────────────────────────────────────────────
+async function submitPhoto(){
+  if(!selFile){ showToast('Choisis une photo !', true); return; }
+  if(isUploading) return;
+  isUploading = true;
+  const btn  = document.getElementById('submit-btn');
+  const prog = document.getElementById('upload-progress');
+  const fill = document.getElementById('upload-fill');
+  const lbl  = document.getElementById('upload-label');
+  btn.textContent = 'Upload...'; btn.disabled = true;
+  prog.style.display = 'block'; fill.style.width = '20%'; lbl.textContent = 'Envoi...';
+  try {
+    // Verif type
+    if(!selFile.type.startsWith('image/') && !selFile.type.startsWith('video/')){
+      showToast('Fichier non accepte — images et videos uniquement !', true);
+      isUploading=false; btn.textContent='Publier'; btn.disabled=false; prog.style.display='none'; return;
+    }
+    // Warn if video is very large
+    if(selFile.type.startsWith('video/') && selFile.size > 100*1024*1024){ showToast('Video trop lourde (max 100MB)', true); isUploading=false; btn.textContent='Publier'; btn.disabled=false; prog.style.display='none'; return; }
+    const ext   = selFile.name.split('.').pop() || 'jpg';
+    const fname = 'photo_' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
+    fill.style.width = '50%'; lbl.textContent = 'Stockage...';
+    const {error: upErr} = await sb.storage.from('photos').upload(fname, selFile, {cacheControl:'3600', upsert:false});
+    if(upErr) throw upErr;
+    fill.style.width = '80%'; lbl.textContent = 'Enregistrement...';
+    const {data: urlData} = sb.storage.from('photos').getPublicUrl(fname);
+    console.log('URL generee:', urlData.publicUrl);
+    const caption = document.getElementById('caption-input').value.trim();
+    const isAnon  = document.getElementById('anon-check').checked;
+    const pseudo  = isAnon ? null : (document.getElementById('pseudo-input').value.trim() || null);
+    const isVid = selFile.type.startsWith('video/');
+    const {error: insErr} = await sb.from('photos').insert({url: urlData.publicUrl, caption, author: pseudo, anon: isAnon, cat: selCat, likes: 0, media_type: isVid ? 'video' : 'image'});
+    if(insErr) throw insErr;
+    fill.style.width = '100%'; lbl.textContent = 'Publie !';
+    setTimeout(async () => {
+      closeModal();
+      showToast('Photo publiee ! 🔥');
+      await loadPhotos();
+      setTimeout(() => document.getElementById('feed').scrollIntoView({behavior:'smooth'}), 300);
+    }, 500);
+  } catch(e) {
+    console.error(e);
+    showToast('Erreur: ' + e.message, true);
+    prog.style.display = 'none'; fill.style.width = '0%';
+  } finally {
+    isUploading = false; btn.textContent = 'Publier'; btn.disabled = false;
+  }
+}
+
+function resetForm(){
+  selFile = null; selCat = 'general';
+  document.getElementById('file-input').value = '';
+  document.getElementById('preview-img').src = ''; document.getElementById('preview-img').style.display = 'none';
+  const oldVid = document.getElementById('preview-vid'); if(oldVid) oldVid.remove();
+  document.querySelector('.drop-zone .drop-text').style.display = 'block';
+  document.querySelector('.drop-icon').style.display = 'block';
+  document.getElementById('caption-input').value = '';
+  document.getElementById('pseudo-input').value = '';
+  document.getElementById('anon-check').checked = true;
+  document.getElementById('pseudo-group').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('upload-fill').style.width = '0%';
+  document.querySelectorAll('.cat-opt').forEach(b => b.classList.remove('sel'));
+  document.querySelector('[data-cat="general"]').classList.add('sel');
+}
+
+// ── LIKES ─────────────────────────────────────────────────────────
+async function like(id){
+  const p = photos.find(x => x.id === id); if(!p) return;
+  const sid = String(id);
+  const already = likedSet.has(sid);
+  const n = (p.likes || 0) + (already ? -1 : 1);
+  if(already) likedSet.delete(sid); else likedSet.add(sid);
+  localStorage.setItem('rv_liked', JSON.stringify([...likedSet]));
+  p.likes = n; renderFeed();
+  await sb.from('photos').update({likes: n}).eq('id', id);
+}
+
+// ── DELETE ────────────────────────────────────────────────────────
+function confirmDelete(id, url){
+  pendingDelId   = id;
+  pendingDelPath = url;
+  document.getElementById('confirm-overlay').classList.add('open');
+  document.getElementById('confirm-yes').onclick = doDelete;
+}
+function closeConfirm(){ document.getElementById('confirm-overlay').classList.remove('open'); }
+
+async function doDelete(){
+  const delId   = pendingDelId;
+  const delUrl  = pendingDelPath;
+  pendingDelId  = null;
+  pendingDelPath = null;
+  closeConfirm();
+  if(!delId) return;
+  try {
+    // Extract filename from URL and delete from storage
+    const match = delUrl.match(/\/photos\/([^?]+)/);
+    if(match && match[1]) await sb.storage.from('photos').remove([decodeURIComponent(match[1])]);
+    // Delete from DB
+    const {error} = await sb.from('photos').delete().eq('id', delId);
+    if(error) throw error;
+    // Remove from UI
+    document.getElementById('acard-' + delId)?.remove();
+    photos = photos.filter(p => p.id !== delId);
+    renderFeed();
+    showToast('Photo supprimee !');
+  } catch(e){
+    showToast('Erreur: ' + e.message, true);
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function ago(iso){
+  if(!iso) return '';
+  const d = (Date.now() - new Date(iso)) / 1000;
+  if(d < 60)    return 'instant';
+  if(d < 3600)  return ~~(d/60) + ' min';
+  if(d < 86400) return ~~(d/3600) + ' h';
+  return ~~(d/86400) + ' j';
+}
+function showToast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── START ─────────────────────────────────────────────────────────
+// ── COMMENTS ──────────────────────────────────────────────────────
+const openComments = new Set();
+
+async function toggleComments(photoId, btn){
+  const box = document.getElementById('cmtbox-' + photoId);
+  if(box.style.display === 'none'){
+    box.style.display = 'block';
+    openComments.add(photoId);
+    await loadComments(photoId);
+  } else {
+    box.style.display = 'none';
+    openComments.delete(photoId);
+  }
+}
+
+async function loadComments(photoId){
+  try {
+    const {data, error} = await sb.from('comments').select('*').eq('photo_id', photoId).order('created_at', {ascending: true});
+    if(error) throw error;
+    const list = document.getElementById('cmtlist-' + photoId);
+    const count = document.getElementById('cmtcount-' + photoId);
+    if(!list) return;
+    count.textContent = (data.length ? data.length + ' ' : '') + 'Commentaire' + (data.length > 1 ? 's' : '');
+    if(!data.length){ list.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:10px;color:var(--muted);padding:4px 0">Aucun commentaire. Sois le premier !</div>'; return; }
+    list.innerHTML = data.map(c => `
+      <div class="comment-item">
+        <div class="comment-author ${c.anon ? 'anon' : ''}">${c.anon ? '// anonyme' : (c.author || '// anonyme')}</div>
+        <div class="comment-text">${esc(c.content)}</div>
+        <div class="comment-time">${ago(c.created_at)}</div>
+      </div>
+    `).join('');
+  } catch(e){ console.error('loadComments', e); }
+}
+
+async function postComment(photoId){
+  const inp    = document.getElementById('cmtinput-' + photoId);
+  const pseudo = document.getElementById('cmtpseudo-' + photoId);
+  const text = inp.value.trim();
+  if(!text) return;
+  const author = pseudo.value.trim() || null;
+  try {
+    const {error} = await sb.from('comments').insert({photo_id: photoId, content: text, author: author, anon: !author});
+    if(error) throw error;
+    inp.value = '';
+    commentCounts[photoId] = (commentCounts[photoId] || 0) + 1;
+    const countEl = document.getElementById('cmtcount-' + photoId);
+    if(countEl) countEl.textContent = commentCounts[photoId] + ' commentaire' + (commentCounts[photoId] > 1 ? 's' : '');
+    await loadComments(photoId);
+  } catch(e){ showToast('Erreur commentaire: ' + e.message, true); }
+}
+
+
+// ── LIGHTBOX ──────────────────────────────────────────────────────
+function openLightbox(type, url, anon, author, caption){
+  const lb     = document.getElementById('lightbox');
+  const img    = document.getElementById('lb-img');
+  const vid    = document.getElementById('lb-vid');
+  const auth   = document.getElementById('lb-author');
+  const cap    = document.getElementById('lb-caption');
+  const isAnon = anon === true || anon === 'true';
+
+  if(type === 'video'){
+    vid.src = url; vid.style.display = 'block';
+    img.style.display = 'none'; img.src = '';
+  } else {
+    img.src = url; img.style.display = 'block';
+    vid.style.display = 'none'; vid.pause && vid.pause(); vid.src = '';
+  }
+  auth.textContent  = isAnon ? '// anonyme' : (author || '// anonyme');
+  auth.className    = 'lightbox-author' + (isAnon ? ' anon' : '');
+  cap.textContent   = caption || '';
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox(){
+  const lb  = document.getElementById('lightbox');
+  const vid = document.getElementById('lb-vid');
+  const img = document.getElementById('lb-img');
+  lb.classList.remove('open');
+  document.body.style.overflow = '';
+  vid.pause && vid.pause();
+  setTimeout(() => { vid.src = ''; img.src = ''; }, 300);
+}
+
+// Close with Escape key
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLightbox(); });
+
+loadPhotos();
+
+</script>
+</body>
+</html>
